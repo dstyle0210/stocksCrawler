@@ -1,2 +1,15 @@
 # stocksCrawler
-매일주가확인용, html, javascript, node, playwright, firebase
+매일 재무제표 업데이트, html, javascript, node, playwright, firebase
+- playwright 크롤링
+- firebase DB , hosting 이용
+- github action 으로 자동화 (평일 , 오전 7시)
+- 작업완료시 텔레그램 쏴줌
+  
+```powershell
+> Set-ExecutionPolicy RemoteSigned
+```
+
+```console
+> git config --global user.name dstyle0210
+> git config --global user.email dstyle0210@gmail.com
+```
