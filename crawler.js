@@ -14,6 +14,7 @@ var browser,page;
 
     var codeList = fs.readFileSync("./stocksCodeList.txt");
     codeList = codeList.toString().split("\r\n");
+    console.log(codeList.length);
     const browser = await chromium.launch({headless:true});
     /*
     browser = await chromium.launch({
