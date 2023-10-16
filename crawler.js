@@ -10,22 +10,33 @@ var rimResult = [];
 var spread = 0;
 var bondSpread3Y = 0;
 var browser,page;
+Date.prototype.yyyymmdd = function() {
+    var mm = this.getMonth() + 1; // getMonth() is zero-based
+    var dd = this.getDate();
+  
+    return [this.getFullYear(),
+            (mm>9 ? '' : '0') + mm,
+            (dd>9 ? '' : '0') + dd
+           ].join('-');
+  };
 (async () => {
 
+    // Read Code List
     var codeList = fs.readFileSync("./stocksCodeList.txt");
     codeList = codeList.toString().split("\n");
     codeList = codeList.map((code)=>code.replace("\r",""));
+
+    // Firebase connect
+    const firebaseConfig = {
+        databaseURL: "https://dstyle-stocks-default-rtdb.firebaseio.com",
+    };
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    // playwright browser open
     const browser = await chromium.launch({headless:true});
-    
-    /*
-    browser = await chromium.launch({
-        headless:true,
-        executablePath:"C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe" 
-    });
-    */
     page = await browser.newPage();
 
-    
     // 기대수익률 구해오기
     await page.goto("https://www.kisrating.com/ratingsStatistics/statics_spread.do");
     let spreads = await page.evaluate(()=>{
@@ -35,22 +46,21 @@ var browser,page;
             bondSpread3Y:toNum( $(".table_ty1 table:eq(0) tr:eq(1) td:eq(7)").get(0) ) // 표시만 있어서 그대로 받음.
         };
     });
-    spread = spreads.spread;
+    spread = +spreads.spread;
     bondSpread3Y = spreads.bondSpread3Y;
     console.log(`기대수익률:${spread} , 3년 국고채 이율:${bondSpread3Y}`);
 
-    const firebaseConfig = {
-        databaseURL: "https://dstyle-stocks-default-rtdb.firebaseio.com",
-    };
-    const app = initializeApp(firebaseConfig);
-
-    
-    const db = getDatabase(app);
+    const rateRef = ref(db, `dailyRate`);
+    await set(rateRef,{
+        spread:spread,
+        bondSpread3Y:bondSpread3Y,
+        date:new Date().yyyymmdd()
+    });
 
     var count = 1;
     for await(let code of codeList){
-        console.log(`${count++} / ${codeList.length}`);
         const stockData = await getDataRIM(code);
+        console.log(`[${count++} / ${codeList.length}] ${stockData.name} : ${stockData.price}`);
         const dbRef = ref(db, `dailyStock/${stockData.code}`);
         await set(dbRef, stockData);
     };
@@ -152,8 +162,6 @@ function getDataRIM(stockCode){
         data.roe = +((data.profit/data.equity).toFixed(4));
         data.rim = +((data.roe - spread)/spread).toFixed(4); // RIM 구하기
         data.cap = Math.floor( data.equity + (data.equity*data.rim) ); // 적정주가
-
-        console.log(`${data.name} : ${data.price}`);
 
         // console.log(data);
         rimResult.push(data);
