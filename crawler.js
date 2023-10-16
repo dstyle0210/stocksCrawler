@@ -13,9 +13,12 @@ var browser,page;
 (async () => {
 
     var codeList = fs.readFileSync("./stocksCodeList.txt");
-    codeList = codeList.toString().split("\r\n");
+    codeList = codeList.toString().split("\n");
+    codeList = codeList.map((code)=>code.replace("\r",""));
     console.log(codeList);
+    return;
     const browser = await chromium.launch({headless:true});
+    
     /*
     browser = await chromium.launch({
         headless:true,
