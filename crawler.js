@@ -29,7 +29,7 @@ var browser,page;
     let spreads = await page.evaluate(()=>{
         const toNum = (element) => +element.innerText.replace(/[\n\s\t\,]/gi,"");
         return {
-            spread:toNum( $(".table_ty1 table:eq(0) tr:last td:last").get(0) )/100, // 계산을 위해 소수점으로 표시
+            spread:(toNum( $(".table_ty1 table:eq(0) tr:last td:last").get(0) )/100).toFixed(4), // 계산을 위해 소수점으로 표시
             bondSpread3Y:toNum( $(".table_ty1 table:eq(0) tr:eq(1) td:eq(7)").get(0) ) // 표시만 있어서 그대로 받음.
         };
     });
@@ -38,7 +38,7 @@ var browser,page;
     console.log(`기대수익률:${spread} , 3년 국고채 이율:${bondSpread3Y}`);
 
     const firebaseConfig = {
-        databaseURL: "https://dstyle-action-crawler-default-rtdb.firebaseio.com",
+        databaseURL: "https://dstyle-stocks-default-rtdb.firebaseio.com",
     };
     const app = initializeApp(firebaseConfig);
 
@@ -58,7 +58,7 @@ var browser,page;
     
     // 텔레그램봇 시작
     const bot = new TelegramBot(token, {polling: false});
-    bot.sendMessage(chatId, `[STOCK] 파일생성 완료\n기대수익률:${spread*100}%\n국고채3년:${bondSpread3Y}%\n기준금리:3.50%`);
+    bot.sendMessage(chatId, `[STOCK] 파일생성 완료\n기대수익률:${(spread*100).toFixed(2)}%\n국고채3년:${bondSpread3Y}%\n기준금리:3.50%`);
 
     await browser.close();
 })();
@@ -75,6 +75,7 @@ function getDataRIM(stockCode){
             const toNum = ($element) => +$element.text().replace(/[\n\s\t\,]/gi,"");
             const $ifrs = $("table").eq(12);
             const $ifrsRows = $ifrs.find("tr");
+            const price = toNum($(document.querySelector("#cTB11 .num strong")));
             
             // 예상 지배주주 순이익 구하기
             let profit = (() => {
@@ -113,6 +114,7 @@ function getDataRIM(stockCode){
             })();
 
             return {
+                price,
                 profit,
                 equity,
                 dividend
@@ -125,7 +127,6 @@ function getDataRIM(stockCode){
         var naverData = await page.evaluate(async function(){
             const toNum = (element) => +element.innerText.replace(/[\n\s\t\,]/gi,"");
             const name = document.querySelector(".wrap_company h2").innerText;
-            const price = toNum( document.querySelector(".no_today") );
             const stocks = toNum( document.querySelector("#tab_con1").getElementsByTagName("em")[2] );
 
             // 외인수급확인
@@ -136,31 +137,22 @@ function getDataRIM(stockCode){
                 return accValue+(+v);
             },0);
 
-            return {name,price,stocks,foreigner}
+            return {name,stocks,foreigner}
         });
+
+        
 
         // 현재 지배주주 ROE 구하기
         var data = Object.assign({
             code:stockCode, // 종목코드 저장
         },naverData,reportData);
         data.profit = reportData.profit - (naverData.stocks*reportData.dividend), // 순이익(배당금을 뺀)
-        data.roe = +((data.profit/data.equity).toFixed(2));
-        data.rim = +((data.roe - spread)/spread).toFixed(2); // RIM 구하기
+        data.roe = +((data.profit/data.equity).toFixed(4));
+        data.rim = +((data.roe - spread)/spread).toFixed(4); // RIM 구하기
         data.cap = Math.floor( data.equity + (data.equity*data.rim) ); // 적정주가
 
-        /*
-        var data = {
-            code:stockCode,
-            cap:resultText.split("\t")[0], // 적정 시가총액
-            rim:resultText.split("\t")[1], // RIM
-            equity:resultText.split("\t")[2], // 자본
-            stocks:resultText.split("\t")[3], // 주식수
-            profit:resultText.split("\t")[4], // 순이익
-            dividend:resultText.split("\t")[5], // 배당금
-            psr:resultText.split("\t")[6], // 총 영업이익률
-            foreigner:resultText.split("\t")[7], // 외인수급
-        };
-        */
+        console.log(`${data.name} : ${data.price}`);
+
         // console.log(data);
         rimResult.push(data);
 
