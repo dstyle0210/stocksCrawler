@@ -103,10 +103,11 @@
           const stocksTable = document.querySelector("#stocksTable tbody");
           rows.forEach((stock)=>{
             const tr = document.createElement("tr");
+            const dividendPer = (stock.dividend/stock.price);
             tr.innerHTML = `
               <td><a href="https://m.stock.naver.com/domestic/stock/${stock.code}/news/title" target="_blank">${stock.name}</a></td>
               <td class="${stock.roe < rate.spread ? 'table-danger' : 'table-success'}">${stock.roePer}%</td>
-              <td class="${(stock.dividend/stock.price) < stock.roe ? 'table-success' : 'table-danger'}">${stock.dividendPer}%</td>
+              <td class="${(dividendPer < stock.roe) && ((rate.bondSpread3Y/100) < dividendPer) ? 'table-success' : 'table-danger'}">${stock.dividendPer}%</td>
               <td class="${0 < stock.safetyMargin ? 'table-success' : 'table-danger'}">${stock.safetyMargin}%</td>
               <td class="${0 < stock.rim ? 'table-success' : 'table-danger'}">${stock.rimPer}%</td>
               <td class="${0 < stock.foreigner ? 'table-success' : 'table-danger'}">${stock.foreigner.toLocaleString()}</td>
