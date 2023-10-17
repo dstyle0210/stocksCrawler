@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport"
+        content="width=device-width, minimum-scale=1.0, maximum-scale=1, target-densitydpi=medium-dpi, viewport-fit=cover">
+    <title>Dstyle Stocks Table</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue@3.3.4/dist/vue.global.min.js"></script>
+    <script src="/__/firebase/10.5.0/firebase-app-compat.js"></script>
+    <script src="/__/firebase/10.5.0/firebase-database-compat.js"></script>
+    <style media="screen">
+        *{margin:0;padding:0;}
+        .stocks{display:flex;}
+        header{display:flex;justify-content:flex-end;background:#f5f5f5;border-bottom:1px solid #ccc;}
+        header p{margin-bottom:0;margin:0 5px;}
+        footer p{float:right;}
+        .table{margin-bottom:0;}
+        .table th{text-align:center;}
+        .table td{text-align:right;}
+        .table td a{color:#333;}
+    </style>
+</head>
+<body id="app">
+    <header>
+        <p>기대수익률(BBB+,5Y) :<strong id="spread"></strong></p>
+        <p>국고채 3년 :<strong id="bond3y"></strong></p>
+        <p>기준금리 :3.50%</p>
+        <p><a href="/document.html">[용어설명]</a></p>
+    </header>
+    <section>
+        {{ message }}
+    </section>
+    <script>
+        let rate = {};
+        const projectId = "dstyle-stocks";
+        firebase.initializeApp({ authDomain:`${projectId}.firebaseapp.com/`, databaseURL:`https://${projectId}-default-rtdb.firebaseio.com`, projectId:projectId });
+        firebase.database().ref('/dailyRate').on('value', snapshot => {
+            const rate_ = snapshot.val();
+            rate = rate_;
+            $("#spread").html((rate.spread * 100).toFixed(2) + "%");
+            $("#bond3y").html(rate.bondSpread3Y + "%");
+            $("#crawlerDate").html(rate.date);
+        });
+
+        const app = Vue.createApp({
+            data() {
+                return {
+                    rate:rate,
+                    message:'안녕하세요, Vue!'
+                };
+            }
+        });
+
+        app.mount('#app');
+    </script>
+    <div id="stocks" class="stocks">
+        <table id="stocksTable" class="table">
+            <thead>
+                <tr>
+                    <th>종목명</th>
+                    <th>ROE</th>
+                    <th>배당률</th>
+                    <th>안전마진</th>
+                    <th>RIM</th>
+                    <th>외인(6일)</th>
+                </tr>
+            </thead>
+            <tbody>
+
+            </tbody>
+        </table>
+    </div>
+    <footer>
+        <p>update :<strong id="crawlerDate"></strong></p>
+    </footer>
+
+
+    <script>
+        firebase.database().ref('/dailyStock').on('value', snapshot => {
+            const stocks = snapshot.val();
+            let rows = [];
+            let tbody = "";
+            for (key in stocks) {
+                rows.push(stocks[key]);
+            }
+            /*
+          var data = {
+              code:stockCode,
+              cap:resultText.split("\t")[0], // 적정 시가총액
+              rim:resultText.split("\t")[1], // RIM
+              equity:resultText.split("\t")[2], // 자본
+              stocks:resultText.split("\t")[3], // 주식수
+              profit:resultText.split("\t")[4], // 순이익
+              dividend:resultText.split("\t")[5], // 배당금
+              psr:resultText.split("\t")[6], // 총 영업이익률
+              foreigner:resultText.split("\t")[7], // 외인수급
+          };
+          */
+
+            rows.forEach((stock) => {
+                stock.dividendPer = +((stock.dividend / stock.price) * 100).toFixed(2);// 배당률
+                stock.roePer = (stock.roe * 100).toFixed(2);// ROE
+                stock.rimPer = (stock.rim * 100).toFixed(2);// RIM
+                stock.rightPrice = Math.floor(stock.cap / stock.stocks);// 적정주가
+                stock.safetyMargin = (((stock.rightPrice - stock.price) / stock.price) * 100).toFixed(2);// 안전마진
+            });
+            rows.sort((a, b) => {
+                return (+b.safetyMargin) - (+a.safetyMargin);
+            });
+            const stocksTable = document.querySelector("#stocksTable tbody");
+            rows.forEach((stock) => {
+                const tr = document.createElement("tr");
+                const dividendPer = (stock.dividend / stock.price);
+                tr.innerHTML = `
+              <td><a href="https://m.stock.naver.com/domestic/stock/${stock.code}/news/title" target="_blank">${stock.name}</a></td>
+              <td class="${stock.roe < rate.spread ? 'table-danger' :'table-success'}">${stock.roePer}%</td>
+              <td class="${(dividendPer < stock.roe) && ((rate.bondSpread3Y / 100) < dividendPer) ? 'table-success' :'table-danger'}">${stock.dividendPer}%</td>
+              <td class="${0 < stock.safetyMargin ? 'table-success' :'table-danger'}">${stock.safetyMargin}%</td>
+              <td class="${0 < stock.rim ? 'table-success' :'table-danger'}">${stock.rimPer}%</td>
+              <td class="${0 < stock.foreigner ? 'table-success' :'table-danger'}">${stock.foreigner.toLocaleString()}</td>
+              `;
+                stocksTable.append(tr);
+            })
+
+            // 빨간색 표시
+            $("#stocksTable td").each((idx, td) => {
+                if ((/^\-/gi).test($(td).text())) {
+                    $(td).addClass("table-danger");
+                }
+            })
+            // ROE 기준
+            $("#stocksTable tbody tr").each((idx, tr) => {
+
+            });
+        });
+    </script>
+</body>
+
+</html>
