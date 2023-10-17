@@ -4,9 +4,10 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1, target-densitydpi=medium-dpi, viewport-fit=cover">
-    <title>Welcome to Firebase Hosting</title>
+    <title>Dstyle Stocks Table</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue@3.3.4/dist/vue.global.min.js"></script>
     <script src="/__/firebase/10.5.0/firebase-app-compat.js"></script>
     <script src="/__/firebase/10.5.0/firebase-database-compat.js"></script>
     <style media="screen">
@@ -18,14 +19,19 @@
       .table{margin-bottom:0;}
       .table th{text-align:center;}
       .table td{text-align:right;}
+      .table td a{color:#333;}
     </style>
   </head>
   <body>
     <header>
-      <p>기대수익률 : <strong id="spread"></strong></p>
-      <p>BBB+(5Y) : <strong id="bond3y"></strong></p>
+      <p>기대수익률(BBB+,5Y) : <strong id="spread"></strong></p>
+      <p>국고채 3년 : <strong id="bond3y"></strong></p>
       <p>기준금리 : 3.50%</p>
+      <p><a href="/document.html">[용어설명]</a></p>
     </header>
+    <section id="stocksTable2">
+
+    </section>
     <div id="stocks" class="stocks">
       <table id="stocksTable" class="table">
         <thead>
@@ -61,7 +67,6 @@
           $("#spread").html((rate.spread*100).toFixed(2)+"%");
           $("#bond3y").html(rate.bondSpread3Y+"%");
           $("#crawlerDate").html(rate.date);
-          console.log(rate);
         });
 
         firebase.database().ref('/dailyStock').on('value', snapshot => {
@@ -91,15 +96,15 @@
             stock.rimPer = (stock.rim*100).toFixed(2); // RIM
             stock.rightPrice = Math.floor(stock.cap/stock.stocks); // 적정주가
             stock.safetyMargin = (((stock.rightPrice-stock.price)/stock.price)*100).toFixed(2); // 안전마진
-          })
+          });
           rows.sort((a,b)=>{
-            return (+b.code) - (+a.code);
+            return (+b.safetyMargin) - (+a.safetyMargin);
           });
           const stocksTable = document.querySelector("#stocksTable tbody");
           rows.forEach((stock)=>{
             const tr = document.createElement("tr");
             tr.innerHTML = `
-              <td>${stock.name}</td>
+              <td><a href="https://m.stock.naver.com/domestic/stock/${stock.code}/news/title" target="_blank">${stock.name}</a></td>
               <td class="${stock.roe < rate.spread ? 'table-danger' : 'table-success'}">${stock.roePer}%</td>
               <td class="${(stock.dividend/stock.price) < stock.roe ? 'table-success' : 'table-danger'}">${stock.dividendPer}%</td>
               <td class="${0 < stock.safetyMargin ? 'table-success' : 'table-danger'}">${stock.safetyMargin}%</td>

@@ -26,5 +26,6 @@
 
 ### Firebase Deploy
 ```console
-
+firebase login
+firebase deploy
 ```

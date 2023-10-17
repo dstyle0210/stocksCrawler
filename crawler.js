@@ -70,7 +70,7 @@ Date.prototype.yyyymmdd = function() {
     
     // 텔레그램봇 시작
     const bot = new TelegramBot(token, {polling: false});
-    bot.sendMessage(chatId, `[STOCK] 파일생성 완료\n기대수익률:${(spread*100).toFixed(2)}%\n국고채3년:${bondSpread3Y}%\n기준금리:3.50%`);
+    bot.sendMessage(chatId, `[STOCK] 파일생성 완료\n기대수익률:${(spread*100).toFixed(2)}%\n국고채3년:${bondSpread3Y}%\n기준금리:3.50%\n 바로가기 https://dstyle-stocks.web.app`);
 
     await browser.close();
 })();
