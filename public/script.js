@@ -35,16 +35,11 @@ $(async function(){
         });
     });
 
-
-
-    console.log(rate);
-    console.log(stocks);
-
     app = Vue.createApp({
         data() {
             return {
                 rate:rate,
-                message:'안녕하세요, Vue!'
+                stocks:stocks
             };
         }
     });
