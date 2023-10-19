@@ -13,32 +13,13 @@ var browser,page;
 Date.prototype.yyyymmdd = function() {
     var mm = this.getMonth() + 1; // getMonth() is zero-based
     var dd = this.getDate();
-  
+
     return [this.getFullYear(),
             (mm>9 ? '' : '0') + mm,
             (dd>9 ? '' : '0') + dd
-           ].join('-');
-  };
+            ].join('-');
+};
 
-(async () => {
-    // playwright browser open
-    const browser = await chromium.launch({headless:true});
-    page = await browser.newPage();
-
-    // 시장지표 구해오기
-    await page.goto("https://finance.naver.com/marketindex/");
-    let index = await page.evaluate(()=>{
-        const toNum = (element) => +element.innerText.replace(/[\n\s\t\,]/gi,"");
-        return {
-            usd:toNum(document.querySelector("#exchangeList .value")), // 달러
-            wti:toNum(document.querySelector("#oilGoldList .value")), // WTI
-            gold:toNum(document.querySelectorAll("#oilGoldList .value")[2]) // 금
-        };
-    });
-    console.log(`USD : ${index.usd}`);
-
-    await browser.close();
-})();
 (async () => {
 
     // Read Code List
@@ -104,12 +85,10 @@ Date.prototype.yyyymmdd = function() {
     
     // 텔레그램봇 시작
     const bot = new TelegramBot(token, {polling: false});
-    bot.sendMessage(chatId, `[STOCK] 파일생성 완료\n기대수익률:${(spread*100).toFixed(2)}%\n국고채3년:${bondSpread3Y}%\n기준금리:3.50%\n 바로가기 https://dstyle-stocks.web.app`);
+    bot.sendMessage(chatId, `[STOCK] 파일생성 완료\nhttps://dstyle-stocks.web.app`);
 
     await browser.close();
 })();
-
-
 
 function getDataRIM(stockCode){
     return new Promise(async function(resolve,reject){
@@ -186,10 +165,7 @@ function getDataRIM(stockCode){
             },0);
             return {name,stocks,foreigner,foreignerY}
         });
-        console.log(naverData.foreignerY);
-
         
-
         // 현재 지배주주 ROE 구하기
         var data = Object.assign({
             code:stockCode, // 종목코드 저장
