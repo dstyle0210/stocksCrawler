@@ -14,7 +14,7 @@
     <script src="/__/firebase/10.5.0/firebase-database-compat.js"></script>
     <script defer src="./script.js"></script>
     <style media="screen">
-        *{margin:0;padding:0;}
+        *{margin:0;padding:0;list-style:none;font-style:normal;}
         .stocks{display:flex;}
         header{display:flex;justify-content:flex-end;background:#f5f5f5;border-bottom:1px solid #ccc;}
         header p{margin-bottom:0;margin:0 5px;}
@@ -23,24 +23,47 @@
         .table th{text-align:center;}
         .table td{text-align:right;}
         .table td a{color:#333;}
+        .table td .-blue{color:blue;}
+        .table td .-red{color:red;}
     </style>
 </head>
-<body id="app">
+<body>
+<main id="app">
     <header>
         <p>기대수익률(BBB+,5Y) :<strong>{{rate.spreadText}}%</strong></p>
         <p>국고채 3년 :<strong>{{rate.bond3yText}}%</strong></p>
         <p>기준금리:<strong>3.50%</strong></p>
         <p><a href="/document.html">[용어설명]</a></p>
     </header>
+    <header>
+        <p>USD :<strong>{{index.usd}}원</strong></p>
+        <p>WTI :<strong>${{index.wti}}</strong></p>
+        <p>GOLD :<strong>${{index.gold}}</strong></p>
+    </header>
     <section>
-        <table>
+        <table class="table">
             <thead>
-
+                <tr>
+                    <th>종목명</th>
+                    <th>ROE</th>
+                    <th>배당률</th>
+                    <th>안전마진</th>
+                    <th>RIM</th>
+                    <th>외인(6일,전일)</th>
+                </tr>
             </thead>
             <tbody>
-                
+                <tr v-for="stock,idx in stocks">
+                    <td><a :href="'https://m.stock.naver.com/domestic/stock/'+stock.code+'/news/title'" target="_blank">{{stock.name}}</a></td>
+                    <td :class="stock.roeClassName">{{stock.roePer}}%</td>
+                    <td :class="stock.dividendClassName">{{stock.dividendPer}}%</td>
+                    <td :class="stock.safetyMarginClassName">{{stock.safetyMargin}}%</td>
+                    <td :class="stock.rimClassName">{{stock.rimPer}}%</td>
+                    <td :class="stock.foreignerClassName">{{stock.foreigner.toLocaleString()}}( <i :class="stock.foreignerYClassName">{{stock.foreignerY.toLocaleString()}}</i> )</td>
+                </tr>
             </tbody>
         </table>
     </section>
+</main>
 </body>
 </html>

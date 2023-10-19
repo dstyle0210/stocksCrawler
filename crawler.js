@@ -19,6 +19,26 @@ Date.prototype.yyyymmdd = function() {
             (dd>9 ? '' : '0') + dd
            ].join('-');
   };
+
+(async () => {
+    // playwright browser open
+    const browser = await chromium.launch({headless:true});
+    page = await browser.newPage();
+
+    // 시장지표 구해오기
+    await page.goto("https://finance.naver.com/marketindex/");
+    let index = await page.evaluate(()=>{
+        const toNum = (element) => +element.innerText.replace(/[\n\s\t\,]/gi,"");
+        return {
+            usd:toNum(document.querySelector("#exchangeList .value")), // 달러
+            wti:toNum(document.querySelector("#oilGoldList .value")), // WTI
+            gold:toNum(document.querySelectorAll("#oilGoldList .value")[2]) // 금
+        };
+    });
+    console.log(`USD : ${index.usd}`);
+
+    await browser.close();
+})();
 (async () => {
 
     // Read Code List
@@ -37,6 +57,20 @@ Date.prototype.yyyymmdd = function() {
     const browser = await chromium.launch({headless:true});
     page = await browser.newPage();
 
+    // 시장지표 구해오기
+    await page.goto("https://finance.naver.com/marketindex/");
+    let index = await page.evaluate(()=>{
+        const toNum = (element) => +element.innerText.replace(/[\n\s\t\,]/gi,"");
+        return {
+            usd:toNum(document.querySelector("#exchangeList .value")), // 달러
+            wti:toNum(document.querySelector("#oilGoldList .value")), // WTI
+            gold:toNum(document.querySelectorAll("#oilGoldList .value")[2]) // 금
+        };
+    });
+    const indexRef = ref(db, `dailyIndex`);
+    await set(indexRef,index);
+    console.log(index);
+
     // 기대수익률 구해오기
     await page.goto("https://www.kisrating.com/ratingsStatistics/statics_spread.do");
     let spreads = await page.evaluate(()=>{
@@ -49,11 +83,11 @@ Date.prototype.yyyymmdd = function() {
     spread = +spreads.spread;
     bondSpread3Y = spreads.bondSpread3Y;
     console.log(`기대수익률:${spread} , 3년 국고채 이율:${bondSpread3Y}`);
-
+    
     const rateRef = ref(db, `dailyRate`);
     await set(rateRef,{
-        spread:spread,
-        bondSpread3Y:bondSpread3Y,
+        spread,
+        bondSpread3Y,
         date:new Date().yyyymmdd()
     });
 
@@ -144,13 +178,15 @@ function getDataRIM(stockCode){
             // 외인수급확인
             const foreignerTable = document.getElementsByTagName("table")[2];
             const foreignerRows = [...foreignerTable.getElementsByTagName("tr")].slice(2,8);
+            let foreignerY = 0;
             foreigner = foreignerRows.reduce((accValue,current) => {
                 let v = current.getElementsByTagName("td")[2].innerText.replace(/[\,\s]/gi,"")*1;
+                if(foreignerY==0) foreignerY = v;
                 return accValue+(+v);
             },0);
-
-            return {name,stocks,foreigner}
+            return {name,stocks,foreigner,foreignerY}
         });
+        console.log(naverData.foreignerY);
 
         
 
