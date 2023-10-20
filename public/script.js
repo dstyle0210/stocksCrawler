@@ -5,10 +5,16 @@ firebase.initializeApp({ authDomain:`${projectId}.firebaseapp.com/`, databaseURL
 $(async function(){
     const index = await new Promise((resolve,reject)=>{
         firebase.database().ref('/dailyIndex').on('value', snapshot => {
-            const indexData = snapshot.val();
-            resolve(indexData);
+            const _index = snapshot.val();
+            resolve(_index);
         });
     });
+    index.usdPer = ((index.usdchange/(index.usd - index.usdchange))*100).toFixed(2);
+    index.usdClassName = index.usdchange < 0 ? "-blue" : "-red";
+    index.wtiPer = ((index.wtichange/(index.wti - index.wtichange))*100).toFixed(2);
+    index.wtiClassName = index.wtichange < 0 ? "-blue" : "-red";
+    index.goldPer = ((index.goldchange/(index.gold - index.goldchange))*100).toFixed(2);
+    index.goldClassName = index.goldchange < 0 ? "-blue" : "-red";
     console.log(index);
 
     const rate = await new Promise((resolve,reject)=>{

@@ -11,13 +11,8 @@ var spread = 0;
 var bondSpread3Y = 0;
 var browser,page;
 Date.prototype.yyyymmdd = function() {
-    var mm = this.getMonth() + 1; // getMonth() is zero-based
-    var dd = this.getDate();
-
-    return [this.getFullYear(),
-            (mm>9 ? '' : '0') + mm,
-            (dd>9 ? '' : '0') + dd
-            ].join('-');
+    let set = (num) => (num<10) ? "0"+num : ""+num;
+    return `${this.getFullYear()}-${set(this.getMonth()+1)}-${set(this.getDate())} ${this.getHours()}:${this.getMinutes()}`;
 };
 
 (async () => {
@@ -41,14 +36,24 @@ Date.prototype.yyyymmdd = function() {
     // 시장지표 구해오기
     await page.goto("https://finance.naver.com/marketindex/");
     let index = await page.evaluate(()=>{
-        const toNum = (element) => +element.innerText.replace(/[\n\s\t\,]/gi,"");
-        return {
+        var toNum = (element) => +element.innerText.replace(/[\n\s\t\,]/gi,"");
+        var isMinus = (element) => element.classList.contains("point_dn");
+        var result = {
             usd:toNum(document.querySelector("#exchangeList .value")), // 달러
-            wti:toNum(document.querySelector("#oilGoldList .value")), // WTI
-            gold:toNum(document.querySelectorAll("#oilGoldList .value")[2]) // 금
-        };
+            usdchange:toNum(document.querySelector("#exchangeList .change")),
+            wti:toNum(document.querySelectorAll("#oilGoldList .value")[0]), // WTI
+            wtichange:toNum(document.querySelectorAll("#oilGoldList .change")[0]),
+            gold:toNum(document.querySelectorAll("#oilGoldList .value")[2]), // 금
+            goldchange:toNum(document.querySelectorAll("#oilGoldList .change")[2]),
+        }
+        result.usdchange = isMinus(document.querySelectorAll("#exchangeList .head_info")[0]) ? -result.usdchange : result.usdchange;
+        result.wtichange = isMinus(document.querySelectorAll("#oilGoldList .head_info")[0]) ? -result.wtichange : result.wtichange;
+        result.goldchange = isMinus(document.querySelectorAll("#oilGoldList .head_info")[2]) ? -result.goldchange : result.goldchange;
+        return result;
     });
+
     const indexRef = ref(db, `dailyIndex`);
+    await set(indexRef,null);
     await set(indexRef,index);
     console.log(index);
 
@@ -61,18 +66,20 @@ Date.prototype.yyyymmdd = function() {
             bondSpread3Y:toNum( $(".table_ty1 table:eq(0) tr:eq(1) td:eq(7)").get(0) ) // 표시만 있어서 그대로 받음.
         };
     });
-    spread = +spreads.spread;
-    bondSpread3Y = spreads.bondSpread3Y;
-    console.log(`기대수익률:${spread} , 3년 국고채 이율:${bondSpread3Y}`);
-    
+    spreads.spread = +spreads.spread;
+    spreads.date = new Date().yyyymmdd();
+
     const rateRef = ref(db, `dailyRate`);
-    await set(rateRef,{
-        spread,
-        bondSpread3Y,
-        date:new Date().yyyymmdd()
-    });
+    await set(rateRef,null);
+    await set(rateRef,spreads);
+    console.log(spreads);
+
+
 
     var count = 1;
+    spread = spreads.spread;
+    bondSpread3Y = spreads.bondSpread3Y;
+    await set( ref(db, `dailyStock`) ,null);
     for await(let code of codeList){
         const stockData = await getDataRIM(code);
         console.log(`[${count++} / ${codeList.length}] ${stockData.name} : ${stockData.price}`);

@@ -1,1 +1,1 @@
-var data=[{"code":"383800","name":"LX홀딩스","stocks":76280690,"foreigner":-38784,"foreignerY":-13780,"price":7280,"profit":-8447013900,"equity":1665600000000,"dividend":310,"roe":-0.0051,"rim":-1.0441,"cap":-73452960000}]
+var data=[{"code":"383800","name":"LX홀딩스","stocks":76280690,"foreigner":-37261,"foreignerY":-1227,"price":7170,"profit":-8447013900,"equity":1665600000000,"dividend":310,"roe":-0.0051,"rim":-1.0439,"cap":-73119840000}]
