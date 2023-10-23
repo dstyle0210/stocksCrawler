@@ -10,18 +10,18 @@
 ## 콘솔
 ### firebase login을 위한 권한변경
 ```powershell
-> Set-ExecutionPolicy RemoteSigned
+Set-ExecutionPolicy RemoteSigned
 ```
 ### Git 등록 (github)
 ```console
-> git config --global user.name dstyle0210
-> git config --global user.email dstyle0210@gmail.com
+git config --global user.name dstyle0210
+git config --global user.email dstyle0210@gmail.com
 ```
 
 ### 필요모듈 설치
 ```console
-> npm i -g firebase-tools
-> npm i
+npm i -g firebase-tools
+npm i
 ```
 
 ### Firebase Deploy
