@@ -18,9 +18,8 @@ Date.prototype.yyyymmdd = function() {
 (async () => {
 
     // Read Code List
-    var codeList = fs.readFileSync("./stocksCodeList.txt");
-    codeList = codeList.toString().split("\n");
-    codeList = codeList.map((code)=>code.replace("\r",""));
+    const codeListRaw = fs.readFileSync("./stocksCodeList.txt");
+    const codeList = codeListRaw.toString().split("\n").map((code)=>code.replace("\r","")).filter(code => code);
 
     // Firebase connect
     const firebaseConfig = {
