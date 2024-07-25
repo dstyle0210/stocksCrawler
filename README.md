@@ -1,3 +1,8 @@
+2024.07.25
+본 프로젝트는 [myCrawler](https://github.com/dstyle0210/myCrawler) 로 폐기통합 됨.
+
+
+
 # stocksCrawler
 매일 재무제표 업데이트, html, javascript, node, playwright, firebase
 - playwright 크롤링
